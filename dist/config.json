@@ -1,0 +1,25 @@
+{
+    "SourceWallets": [
+        "EQBJbS35Ec-efHt7bOxPl3Vitw7CXLUBU_CT0r0NnVnOtpGy",
+        "EQCCv1qVvY4V4BngLb6KRzrHbjacrDS7GE_ixCt9przbPqXO"
+    ],
+    "V3Wallets": [
+        "Ef9SGIB3Pix1RxyAGR9jQa5sA4Ug5Ljw3QAJsdF7euE1EpFI",
+        "Ef-z7WoGSOBGqBFQD0heRb1MwR1bEg4jC0xvo_atd-fDyV9y",
+        "Ef89bWYgYPsFlX3XOgTVhz_D6Av5Pc-D2xVrbOTMwCSlPz2O"
+    ],
+    "SNMWallets": [
+        "Ef_xZHvyBWNmswe8n-70r4_isB50uQzXHg_RGS6Z0P6zJY22",
+        "Ef_VyGX6m3deV4ZF-3veC_hdrkjDG7ojIC6VI-5NWlKNCwWx",
+        "Ef_BME7owJfXbcj3EcNXINKvg8YBdlI_eLBJWl-Kf9YsXMem"
+    ],
+    "Nodes": [],
+    "Names": {
+        "Ef_xZHvyBWNmswe8n-70r4_isB50uQzXHg_RGS6Z0P6zJY22": "SN00",
+        "Ef_VyGX6m3deV4ZF-3veC_hdrkjDG7ojIC6VI-5NWlKNCwWx": "SN01",
+        "Ef_BME7owJfXbcj3EcNXINKvg8YBdlI_eLBJWl-Kf9YsXMem": "SN10",
+        "Ef9SGIB3Pix1RxyAGR9jQa5sA4Ug5Ljw3QAJsdF7euE1EpFI": "V00",
+        "Ef-z7WoGSOBGqBFQD0heRb1MwR1bEg4jC0xvo_atd-fDyV9y": "V01",
+        "Ef89bWYgYPsFlX3XOgTVhz_D6Av5Pc-D2xVrbOTMwCSlPz2O": "V10"
+    }
+}
