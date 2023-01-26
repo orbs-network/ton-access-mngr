@@ -8,7 +8,8 @@
     "declaration": true,
     "resolveJsonModule": true,
     "importsNotUsedAsValues": "preserve",
-    "outDir": "dist"
+    "outDir": "out",
+    "sourceMap": true
   },
   "include": [
     "./src",

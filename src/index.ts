@@ -1,5 +1,9 @@
 // Import the express in typescript file
 import express from 'express';
+import { Mngr } from './mngr';
+
+const mngr = new Mngr();
+mngr.runLoop();
 
 // Initialize the express engine
 const app: express.Application = express();
@@ -8,12 +12,17 @@ const app: express.Application = express();
 const port: number = 3000;
 
 // Handling '/' Request
+
 app.get('/', (_req, _res) => {
-    _res.send("TypeScript With Express");
+    _res.json(mngr.status);
+});
+
+app.get('/health', (_req, _res) => {
+    _res.status(mngr.status.code).send(mngr.status.text);
 });
 
 // Server setup
 app.listen(port, () => {
-    console.log(`TypeScript with Express
+    console.log(`ton-access-mngr Express
          http://localhost:${port}/`);
 });
