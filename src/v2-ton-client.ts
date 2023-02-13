@@ -17,17 +17,7 @@ type ParsedTx = {
     time: Date
 }
 
-function GetName(addr: string, forTG: boolean = false): string {
-    //@ts-ignore
-    let name = AllConfig.Names[addr];
-    if (!name)
-        name = "";
-    if (forTG)
-        return "<" + name + ">: [" + addr + "](https://tonscan.org/address/+" + addr + ")";
-    else
-        return "<" + name + ">: " + addr;
 
-}
 async function GetTxSafe(client: TonClient, addr: Address, limit = 20): Promise<TonTransaction[]> {
 
     try {
@@ -251,11 +241,7 @@ export async function MonitorActivity() {
     });
 
 
-
     let results = new Results();
-    var name: string = "Geralt";
-
-    //console.log(`Testing ${AllConfig.SNMWallets.length} snm wallets`);
 
     let promisesSNM: Promise<ValidatorResult>[] = [];
     for (const w of AllConfig.SNMWallets) {
