@@ -24,7 +24,7 @@ RUN npm ci --production
 
 COPY --from=builder /usr/src/app/out ./out
 
-ENV V2_MAINNET_ENDPOINT http://v2-mainnet/jsonRPC
+ENV V2_MAINNET_ENDPOINT http://v2-mainnet:8081/jsonRPC
 
 EXPOSE 3000
 CMD [ "node", "out/index.js" ]
