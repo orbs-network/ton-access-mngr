@@ -40,20 +40,15 @@ export class Mngr {
             "v4-mainnet": false,
             "v4-testnet": false
         }
-        try {
+        //try {
 
-            this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test);
-            this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test);
+        this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test);
+        this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test);
 
-            this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test);
-            this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://3.129.218.179:20002", v4Test);
+        this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test);
+        this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://3.129.218.179:20002", v4Test);
 
-            this.successTS = Date.now();
-        }
-        catch (e: any) {
-            console.error('monitor', e);
-            this.errors.push(e.message);
-        }
+        this.successTS = Date.now();
         this.updateStatus();
     }
     async runTest(endpoint: string, testFunc: (endpoint: string) => Promise<void>): Promise<boolean> {
@@ -62,7 +57,7 @@ export class Mngr {
             return true;
         } catch (e: any) {
             console.error('monitor', e);
-            this.errors.push(e.message);
+            this.errors.push(e.message + ' - endpoint: ' + endpoint);
             return false;
         }
     }
