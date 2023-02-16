@@ -1,5 +1,5 @@
-import { BlobOptions } from "buffer";
-import { MonitorActivity } from "./v2-ton-client"
+import { v2Test } from "./v2-ton-client"
+import { v4Test } from "./v4-ton-client"
 
 // from ton-access lib
 // type EdgeProtocol = "toncenter-api-v2" | "ton-api-v4" | "adnl-proxy"; // default: toncenter-api-v2
@@ -41,7 +41,13 @@ export class Mngr {
             "v4-testnet": false
         }
         try {
-            this.health['v2-mainnet'] = await this.Checkv2Mainnet();
+
+            this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test);
+            this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test);
+
+            this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test);
+            this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://3.129.218.179:20002", v4Test);
+
             this.successTS = Date.now();
         }
         catch (e: any) {
@@ -50,9 +56,9 @@ export class Mngr {
         }
         this.updateStatus();
     }
-    async Checkv2Mainnet(): Promise<boolean> {
+    async runTest(endpoint: string, testFunc: (endpoint: string) => Promise<void>): Promise<boolean> {
         try {
-            await MonitorActivity()
+            await testFunc(endpoint);
             return true;
         } catch (e: any) {
             console.error('monitor', e);
