@@ -1,10 +1,14 @@
 import { v2Test } from "./v2-ton-client"
 import { v4Test } from "./v4-ton-client"
+import axios from 'axios';
 
 // from ton-access lib
 // type EdgeProtocol = "toncenter-api-v2" | "ton-api-v4" | "adnl-proxy"; // default: toncenter-api-v2
 // type Network = "mainnet" | "testnet"; //| "sandbox"- is deprecated ; // default: mainnet
 //type ProtoNet = "v2-mainnet" | "v2-testnet" | "v4-mainnet" | "v4-testnet";  //| "sandbox"- is deprecated ; // 
+
+const AXIOS_TIMEOUT = 1500;
+
 type ProtoNetHealth = {
     "v2-mainnet": boolean,
     "v2-testnet": boolean,
@@ -16,23 +20,66 @@ export class Mngr {
     successTS: number;
     errors: Array<string>;
     status: any;
+    edgeSvcUrl: string;
+    edgeHeaders: any;
+    beName2Id: any;
+    nodes: any;
 
     constructor() {
         this.successTS = -1;
         this.errors = [];
+        this.beName2Id = {};
+
         const dt = new Date();
+
         this.status = {
             updated: dt.toUTCString(),
             code: 500,
             text: 'first check hasnt finished yet - server error: 500'
+        }
+
+        this.edgeSvcUrl = `https://api.fastly.com/service/${process.env.FASTLY_SERVICE_ID}`;
+        this.edgeHeaders = {
+            'Fastly-Key': process.env.FASTLY_API_KEY,
+            'Accept': 'application/json'
         }
     }
     async runLoop() {
         await this.monitor();
         setTimeout(this.runLoop.bind(this), 60 * 1000)
     }
+    async updateNodeMngr(node: any) {
+        try {
+            const url = `http://${node.Ip}/mngr/`;
+            const res = await axios.get(url, {
+                headers: this.edgeHeaders,
+                timeout: AXIOS_TIMEOUT
+            });
+            if (res.status === 200) {
+                node.Mngr = res.data;
+            }
+            else {
+                node.Mngr = { error: `wrong health call http status ${res.status}` };
+            }
+        }
+        catch (e) {
+            node.Mngr = { error: e }
+        }
+    }
+    async updateNodes() {
+        // update nodes
+        this.nodes = await this.getNodes();
+        let calls = [];
+        for (const node of this.nodes) {
+            calls.push(this.updateNodeMngr(node));
+        }
+        await Promise.all(calls);
+    }
     async monitor() {
-        // reset         
+        // each node keeps [nodes] structure with health of all nodes 
+        await this.updateNodes();
+
+        // reset local test         
         this.errors = [];
         this.health = {
             "v2-mainnet": false,
@@ -40,7 +87,7 @@ export class Mngr {
             "v4-mainnet": false,
             "v4-testnet": false
         }
-        //try {
+
 
         this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test);
         this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test);
@@ -50,6 +97,42 @@ export class Mngr {
 
         this.successTS = Date.now();
         this.updateStatus();
+    }
+    //////////////////////////////////////////////////
+    async callEdgeApi(method: string) {
+        const url = `${this.edgeSvcUrl}/${method}`;
+        return await axios.get(url, {
+            headers: this.edgeHeaders,
+            timeout: AXIOS_TIMEOUT
+        });
+    }
+    //////////////////////////////////////////////////
+    async getNodes() {
+        // get active version
+        const version = await this.callEdgeApi(`version/active`);
+        // get backend names
+        const table = await this.callEdgeApi(`version/${version.data.number}/dictionary/beName2Id`);
+        // get items
+        const items = await this.callEdgeApi(`dictionary/${table.data.id}/items`);
+        // populate
+        this.beName2Id = {}
+        for (const item of items.data) {
+            this.beName2Id[item.item_key] = item.item_value;
+        }
+
+        // get backends edge api
+        const backends = await this.callEdgeApi(`version/${version.data.number}/backend`);
+        const nodes = [];
+        for (const backend of backends.data) {
+            nodes.push({
+                "NodeId": this.beName2Id[backend.name],
+                "BackendName": backend.name,
+                "Ip": backend.address,
+                "Weight": backend.weight,
+                "Healthy": "1"
+            });
+        }
+        return nodes;
     }
     async runTest(endpoint: string, testFunc: (endpoint: string) => Promise<void>): Promise<boolean> {
         try {

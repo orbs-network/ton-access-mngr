@@ -21,6 +21,10 @@ app.get('/health', (_req, _res) => {
     _res.status(mngr.status.code).send(mngr.status.text);
 });
 
+app.get('/nodes', (_req, _res) => {
+    _res.status(200).send(mngr.nodes);
+});
+
 // Server setup
 app.listen(port, () => {
     console.log(`ton-access-mngr Express
