@@ -3,3 +3,4 @@ out/
 _*tsconfig.json
 config.json
 *.txt
+.vscode/
