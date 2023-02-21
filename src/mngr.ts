@@ -69,6 +69,7 @@ export class Mngr {
     async updateNodes() {
         // update nodes
         this.nodes = await this.getNodes();
+
         let calls = [];
         for (const node of this.nodes) {
             calls.push(this.updateNodeMngr(node));
@@ -77,7 +78,13 @@ export class Mngr {
     }
     async monitor() {
         // each node keeps [nodes] structure with health of all nodes 
-        await this.updateNodes();
+        try {
+            await this.updateNodes();
+        }
+        catch (e) {
+            console.error('failed to update nodes', e);
+            return;
+        }
 
         // reset local test         
         this.errors = [];
