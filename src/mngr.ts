@@ -45,8 +45,11 @@ export class Mngr {
         }
     }
     async runLoop() {
-        await this.monitor();
-        setTimeout(this.runLoop.bind(this), 60 * 1000)
+        // await this.monitor();
+        // setTimeout(this.runLoop.bind(this), 60 * 1000)
+        setInterval(async () => {
+            await this.monitor();
+        }, 60 * 1000);
     }
     async updateNodeMngr(node: any) {
         try {
