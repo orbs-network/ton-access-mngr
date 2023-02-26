@@ -47,6 +47,7 @@ export class Mngr {
     async runLoop() {
         // await this.monitor();
         // setTimeout(this.runLoop.bind(this), 60 * 1000)
+        await this.monitor();
         setInterval(async () => {
             await this.monitor();
         }, 60 * 1000);
@@ -98,12 +99,24 @@ export class Mngr {
             "v4-testnet": false
         }
 
+        // make parallel
+        let calls = [];
+        calls.push(this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test));
+        calls.push(this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test));
 
-        this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test);
-        this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test);
+        calls.push(this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test));
+        calls.push(this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20002", v4Test));
 
-        this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test);
-        this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://3.129.218.179:20002", v4Test);
+        const res = await Promise.all(calls);
+        this.health['v2-mainnet'] = res[0];
+        this.health['v2-testnet'] = res[1];
+        this.health['v4-mainnet'] = res[2];
+        this.health['v4-testnet'] = res[3];
+        // this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test);
+        // this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test);
+
+        // this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test);
+        // this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://3.129.218.179:20002", v4Test);
 
         this.successTS = Date.now();
         this.updateStatus();
