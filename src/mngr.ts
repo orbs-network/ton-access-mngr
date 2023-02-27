@@ -2,6 +2,7 @@ import { v2Test } from "./v2-ton-client"
 import { v4Test } from "./v4-ton-client"
 import axios from 'axios';
 
+
 // from ton-access lib
 // type EdgeProtocol = "toncenter-api-v2" | "ton-api-v4" | "adnl-proxy"; // default: toncenter-api-v2
 // type Network = "mainnet" | "testnet"; //| "sandbox"- is deprecated ; // default: mainnet
@@ -47,7 +48,9 @@ export class Mngr {
     async runLoop() {
         // await this.monitor();
         // setTimeout(this.runLoop.bind(this), 60 * 1000)
+        console.log('start run loop')
         await this.monitor();
+        console.log('first monitor tick done')
         setInterval(async () => {
             await this.monitor();
         }, 60 * 1000);

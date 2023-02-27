@@ -27,6 +27,5 @@ app.get('/nodes', (_req, _res) => {
 
 // Server setup
 app.listen(port, () => {
-    console.log(`ton-access-mngr Express
-         http://localhost:${port}/`);
+    console.log(`ton-access-mngr Express listen at http://localhost:${port}/`);
 });
