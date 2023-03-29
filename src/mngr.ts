@@ -108,7 +108,7 @@ export class Mngr {
         calls.push(this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test));
 
         calls.push(this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test));
-        calls.push(this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20002", v4Test));
+        calls.push(this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://3.129.218.179:20002", v4Test));
 
         const res = await Promise.all(calls);
         this.health['v2-mainnet'] = res[0];
