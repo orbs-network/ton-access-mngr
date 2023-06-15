@@ -1,5 +1,6 @@
-import { v2Test } from "./v2-ton-client"
-import { v4Test } from "./v4-ton-client"
+import { v2Check } from "./v2-ton-client"
+import { v4Check } from "./v4-ton-client"
+import { sleep } from '../src/helper';
 import axios from 'axios';
 
 
@@ -8,7 +9,7 @@ import axios from 'axios';
 // type Network = "mainnet" | "testnet"; //| "sandbox"- is deprecated ; // default: mainnet
 //type ProtoNet = "v2-mainnet" | "v2-testnet" | "v4-mainnet" | "v4-testnet";  //| "sandbox"- is deprecated ; // 
 
-const AXIOS_TIMEOUT = 1500;
+const AXIOS_TIMEOUT = 5000;
 
 type ProtoNetHealth = {
     "v2-mainnet": boolean,
@@ -16,6 +17,7 @@ type ProtoNetHealth = {
     "v4-mainnet": boolean,
     "v4-testnet": boolean
 }
+
 export class Mngr {
     health: ProtoNetHealth | undefined;
     successTS: number;
@@ -25,11 +27,13 @@ export class Mngr {
     edgeHeaders: any;
     beName2Id: any;
     nodes: any;
+    running: boolean;
 
     constructor() {
         this.successTS = -1;
         this.errors = [];
         this.beName2Id = {};
+        this.running = false;
 
         const dt = new Date();
 
@@ -44,16 +48,25 @@ export class Mngr {
             'Fastly-Key': process.env.FASTLY_API_KEY,
             'Accept': 'application/json'
         }
+
+    }
+    stopLoop() {
+        this.running = false;
     }
     async runLoop() {
-        // await this.monitor();
-        // setTimeout(this.runLoop.bind(this), 60 * 1000)
+        this.running = true;
         console.log('start run loop')
         await this.monitor();
         console.log('first monitor tick done')
-        setInterval(async () => {
+        while (this.running) {
             await this.monitor();
-        }, 60 * 1000);
+            await sleep(60 * 1000);
+
+        }
+        // this.tsid = setInterval(async () => {
+        //     await this.monitor();
+        // }, 60 * 1000);
+
     }
     async updateNodeMngr(node: any) {
         try {
@@ -75,22 +88,21 @@ export class Mngr {
     }
     async updateNodes() {
         // update nodes
-        this.nodes = await this.getNodes();
+        const nodes = await this.getNodes();
 
-        let calls = [];
-        for (const node of this.nodes) {
-            calls.push(this.updateNodeMngr(node));
+        // call serial
+        for (const node of nodes) {
+            await this.updateNodeMngr(node);
         }
-        await Promise.all(calls);
+        return nodes;
     }
     async monitor() {
         // each node keeps [nodes] structure with health of all nodes 
         try {
-            await this.updateNodes();
+            this.nodes = await this.updateNodes();
         }
         catch (e) {
             console.error('failed to update nodes', e);
-            return;
         }
 
         // reset local test         
@@ -102,24 +114,11 @@ export class Mngr {
             "v4-testnet": false
         }
 
-        // make parallel
-        let calls = [];
-        calls.push(this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test));
-        calls.push(this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test));
-
-        calls.push(this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test));
-        calls.push(this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://3.129.218.179:20002", v4Test));
-
-        const res = await Promise.all(calls);
-        this.health['v2-mainnet'] = res[0];
-        this.health['v2-testnet'] = res[1];
-        this.health['v4-mainnet'] = res[2];
-        this.health['v4-testnet'] = res[3];
-        // this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://3.129.218.179:10001", v2Test);
-        // this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://3.129.218.179:10002", v2Test);
-
-        // this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://3.129.218.179:20001", v4Test);
-        // this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://3.129.218.179:20002", v4Test);
+        // make serial for caution
+        this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://ton-access-dev:10001", v2Check);
+        this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://ton-access-dev:10002", v2Check);
+        this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://ton-access-dev:20001", v4Check);
+        this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://ton-access-dev:20002", v4Check);
 
         this.successTS = Date.now();
         this.updateStatus();
@@ -165,7 +164,7 @@ export class Mngr {
             await testFunc(endpoint);
             return true;
         } catch (e: any) {
-            console.error('monitor', e);
+            console.error('runTest error:', e.message);
             this.errors.push(e.message + ' - endpoint: ' + endpoint);
             return false;
         }
