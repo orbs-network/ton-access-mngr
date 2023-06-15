@@ -7,7 +7,7 @@ function bnNanoTONsToTons(bn: BN): number {
     return bn.div(new BN(Math.pow(10, 9))).toNumber()
 }
 
-export async function v2Test(endpoint: string) {
+export async function v2Check(endpoint: string) {
     endpoint += '/jsonRPC';
     let client = new TonClient({
         endpoint: endpoint,
