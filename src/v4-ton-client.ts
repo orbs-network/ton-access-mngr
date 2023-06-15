@@ -1,14 +1,17 @@
 //import AllConfig from "./config.json"
 import { TonClient4, Address } from "ton";
 import BN from "bn.js";
+import { sleep } from './helper';
 import WebSocket from 'ws';
 
-function delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 // gets the first account in the first shards's transactions
 export async function v4TestWebsock(endpoint: string): Promise<boolean> {
-    const url = endpoint + '/block/watch/changed';
+
+    let url = endpoint + '/block/watch/changed';
+    console.log('v4TestWebsock start test');
+
+    url = url.replace('http', 'ws');
+    console.log('url:', url);
     const ws = new WebSocket(url);
 
     let res = false;
@@ -17,23 +20,22 @@ export async function v4TestWebsock(endpoint: string): Promise<boolean> {
         console.error(e);
     });
 
-    ws.on('open', function open() {
-        ws.send('something');
-    });
+    // ws.on('open', function open() {
+    //     ws.send('something');
+    // });
 
     ws.on('message', function message(data: any) {
-        console.log('received: %s', data);
+        console.log('v4TestWebsock success:', data);
         res = true;
-
     });
 
-    delay(2000);
+    await sleep(2000);
+    ws.close();
 
     return res;
-
 }
 
-export async function v4Test(endpoint: string) {
+export async function v4Check(endpoint: string) {
 
     const client4 = new TonClient4({ endpoint }); // initialize ton library
 
@@ -48,7 +50,8 @@ export async function v4Test(endpoint: string) {
     if (tx2.length <= 0)
         throw new Error('getAccountTransactions return empty')
 
-    // check WS
-    if (!v4TestWebsock)
+    //check WS
+    const wsRes = await v4TestWebsock(endpoint);
+    if (!wsRes)
         throw new Error('/watch websocket api failed');
 }
