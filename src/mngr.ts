@@ -1,6 +1,6 @@
 import { v2Check } from "./v2-ton-client"
 import { v4Check } from "./v4-ton-client"
-import { sleep } from '../src/helper';
+import { sleep } from './helper';
 import axios from 'axios';
 
 
