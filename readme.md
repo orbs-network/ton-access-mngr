@@ -5,6 +5,8 @@ and also fetch the nodes from the edge
 ## Endpoints
 - `/` returns health status of proto-nets (edge*nginx calls this upon a /mngr call to the edge)
 - `/nodes` returns a list of all nodes
+- `/v1/nodes` returns a list of all nodes in legacy v1 format to replace edge implementation
+- `/status` returns status code and text (redundant - not used by edge or client)
 
 ## Releases
 `v1.1.0`
