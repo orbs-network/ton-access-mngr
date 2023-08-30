@@ -18,11 +18,22 @@ app.get('/', (_req, _res) => {
 });
 
 app.get('/health', (_req, _res) => {
+    if (mngr.atleastOneHealthy) {
+        _res.status(200).send("OK");
+    } else {
+        _res.status(500).send("no protonet is healthy in this node");
+    }
+});
+
+app.get('/status', (_req, _res) => {
     _res.status(mngr.status.code).send(mngr.status.text);
 });
 
 app.get('/nodes', (_req, _res) => {
     _res.status(200).send(mngr.nodes);
+});
+app.get('/v1/nodes', (_req, _res) => {
+    _res.status(200).json(mngr.v1Nodes);
 });
 
 // Server setup

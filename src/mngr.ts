@@ -7,7 +7,7 @@ import axios from 'axios';
 // from ton-access lib
 // type EdgeProtocol = "toncenter-api-v2" | "ton-api-v4" | "adnl-proxy"; // default: toncenter-api-v2
 // type Network = "mainnet" | "testnet"; //| "sandbox"- is deprecated ; // default: mainnet
-//type ProtoNet = "v2-mainnet" | "v2-testnet" | "v4-mainnet" | "v4-testnet";  //| "sandbox"- is deprecated ; // 
+// type ProtoNet = "v2-mainnet" | "v2-testnet" | "v4-mainnet" | "v4-testnet";
 
 const AXIOS_TIMEOUT = 5000;
 
@@ -27,13 +27,16 @@ export class Mngr {
     edgeHeaders: any;
     beName2Id: any;
     nodes: any;
+    v1Nodes: any[];
     running: boolean;
+    atleastOneHealthy: boolean;
 
     constructor() {
         this.successTS = -1;
         this.errors = [];
         this.beName2Id = {};
         this.running = false;
+        this.v1Nodes = [];
 
         const dt = new Date();
 
@@ -48,6 +51,7 @@ export class Mngr {
             'Fastly-Key': process.env.FASTLY_API_KEY,
             'Accept': 'application/json'
         }
+        this.atleastOneHealthy = false;
 
     }
     stopLoop() {
@@ -113,6 +117,8 @@ export class Mngr {
             "v4-mainnet": false,
             "v4-testnet": false
         }
+        // reset healthy flag
+        this.atleastOneHealthy = false;
 
         // make serial for caution
         this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://ton-access-dev:10001", v2Check);
@@ -148,20 +154,58 @@ export class Mngr {
         // get backends edge api
         const backends = await this.callEdgeApi(`version/${version.data.number}/backend`);
         const nodes = [];
+        this.v1Nodes = [];
+
+        // iterate through fastly backends        
         for (const backend of backends.data) {
-            nodes.push({
-                "NodeId": this.beName2Id[backend.name],
-                "BackendName": backend.name,
-                "Ip": backend.address,
-                "Weight": backend.weight,
-                "Healthy": "1"
-            });
+            // ignore backends which are not in beName2Id table
+            // as beName2Id-U-Installed Backends, becomes the single source of truth for both v1 and v2 
+            if (this.beName2Id.hasOwnProperty(backend.name)) {
+                let healthy = "0";
+                try {
+                    if (backend.healthcheck) {
+                        // get healthcheck obj associated with the backend
+                        const hc = await this.callEdgeApi(`version/${version.data.number}/healthcheck/${backend.healthcheck}`);
+                        // create healthcheck url
+                        const hcUrl = `http://${backend.ipv4}/${hc.data.path}`;
+                        // perform healthcheck
+                        const hcRes = await axios.get(hcUrl, {
+                            timeout: AXIOS_TIMEOUT
+                        });
+                        healthy = hcRes.status === hc.data?.expected_response ? "1" : "0";
+                    }
+                    else {
+                        // healthcheck not imnstalled, assumes healthy
+                        healthy = "1";
+                    }
+                } catch (e) {
+                    console.error("helathecheck error", e);
+                }
+
+                // latest /mngr/nodes format
+                nodes.push({
+                    "NodeId": this.beName2Id[backend.name],
+                    "BackendName": backend.name,
+                    "Ip": backend.address,
+                    "Weight": backend.weight,
+                    "Healthy": healthy
+                });
+                this.v1Nodes.push({
+                    "Name": this.beName2Id[backend.name],
+                    "BackendName": backend.name,
+                    "Ip": backend.address,
+                    "Healthy": healthy
+                });
+            }
         }
         return nodes;
     }
     async runTest(endpoint: string, testFunc: (endpoint: string) => Promise<void>): Promise<boolean> {
         try {
             await testFunc(endpoint);
+            // thats the health of the node!            
+            this.atleastOneHealthy = true;
+            // its being reset before all runTest calls
             return true;
         } catch (e: any) {
             console.error('runTest error:', e.message);
@@ -192,6 +236,7 @@ export class Mngr {
             health: this.health,
             successTS: this.successTS,
             errors: this.errors,
+            atleastOneHealthy: this.atleastOneHealthy,
             code: code,
             text: (code === 200) ? 'OK' : text
         }
