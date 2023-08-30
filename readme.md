@@ -8,6 +8,8 @@ and also fetch the nodes from the edge
 
 ## Releases
 `v1.1.0`
+- dynamic healthcheck calls on the backend for /nodes
+- /v1/nodes legacy nodes
 - health is based on atleast one healthy protonet
 - nodes list is unity of beName2Id with edge installed backends
 
