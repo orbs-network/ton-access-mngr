@@ -11,7 +11,6 @@ export async function v4TestWebsock(endpoint: string): Promise<boolean> {
     console.log('v4TestWebsock start test');
 
     url = url.replace('http', 'ws');
-    console.log('url:', url);
     const ws = new WebSocket(url);
 
     let res = false;
@@ -25,7 +24,7 @@ export async function v4TestWebsock(endpoint: string): Promise<boolean> {
     // });
 
     ws.on('message', function message(data: any) {
-        console.log('v4TestWebsock success:', data);
+        //console.log('v4TestWebsock success:', data);
         res = true;
     });
 
@@ -50,8 +49,8 @@ export async function v4Check(endpoint: string) {
     if (tx2.length <= 0)
         throw new Error('getAccountTransactions return empty')
 
-    //check WS
-    const wsRes = await v4TestWebsock(endpoint);
-    if (!wsRes)
-        throw new Error('/watch websocket api failed');
+    //check WS - removed till is a production requirement again
+    // const wsRes = await v4TestWebsock(endpoint);
+    // if (!wsRes)
+    //     throw new Error('/watch websocket api failed');
 }
