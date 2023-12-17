@@ -6,9 +6,14 @@ and also fetch the nodes from the edge
 - `/` returns health status of proto-nets (edge*nginx calls this upon a /mngr call to the edge)
 - `/nodes` returns a list of all nodes
 - `/v1/nodes` returns a list of all nodes in legacy v1 format to replace edge implementation
-- `/status` returns status code and text (redundant - not used by edge or client)
+- `/status` [not used]returns status code and text (redundant - not used by edge or client)
+- `/health` healthcheck for edge, return true if atleast one protonet is serving
 
 ## Releases
+`v1.1.1`
+- try & catch on nodes list
+- disable ws test untill it is production grade
+
 `v1.1.0`
 - dynamic healthcheck calls on the backend for /nodes
 - /v1/nodes legacy nodes
