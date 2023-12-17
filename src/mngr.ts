@@ -83,7 +83,9 @@ export class Mngr {
                 node.Mngr = res.data;
             }
             else {
-                node.Mngr = { error: `wrong health call http status ${res.status}` };
+                const msg = `wrong health call http status ${res.status}`;
+                console.error(msg)
+                node.Mngr = { error: msg };
             }
         }
         catch (e) {
@@ -92,7 +94,15 @@ export class Mngr {
     }
     async updateNodes() {
         // update nodes
-        const nodes = await this.getNodes();
+        let nodes = []
+        try {
+            nodes = await this.getNodes();
+        }
+        catch (e) {
+            console.error('failed to get nodes from fastly')
+            console.error(e)
+            return
+        }
 
         // call serial
         for (const node of nodes) {
@@ -175,7 +185,7 @@ export class Mngr {
                         healthy = hcRes.status === hc.data?.expected_response ? "1" : "0";
                     }
                     else {
-                        // healthcheck not imnstalled, assumes healthy
+                        // healthcheck not installed, assumes healthy
                         healthy = "1";
                     }
                 } catch (e) {
@@ -208,7 +218,7 @@ export class Mngr {
             // its being reset before all runTest calls
             return true;
         } catch (e: any) {
-            console.error('runTest error:', e.message);
+            console.error(`runTest error "${endpoint}":`, e.message);
             this.errors.push(e.message + ' - endpoint: ' + endpoint);
             return false;
         }
