@@ -10,6 +10,11 @@ and also fetch the nodes from the edge
 - `/health` healthcheck for edge, return true if atleast one protonet is serving
 
 ## Releases
+`v1.1.2`
+- gets external ip
+- update node localy
+- axios timeout env var
+
 `v1.1.1`
 - try & catch on nodes list
 - disable ws test untill it is production grade
