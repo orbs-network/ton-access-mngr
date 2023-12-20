@@ -10,6 +10,8 @@ and also fetch the nodes from the edge
 - `/health` healthcheck for edge, return true if atleast one protonet is serving
 
 ## Releases
+`v1.1.3`
+- avoid checking my own health
 `v1.1.2`
 - gets external ip
 - update node localy
