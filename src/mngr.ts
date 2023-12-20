@@ -2,20 +2,43 @@ import { v2Check } from "./v2-ton-client"
 import { v4Check } from "./v4-ton-client"
 import { sleep } from './helper';
 import axios from 'axios';
-
+import * as http from 'http';
 
 // from ton-access lib
 // type EdgeProtocol = "toncenter-api-v2" | "ton-api-v4" | "adnl-proxy"; // default: toncenter-api-v2
 // type Network = "mainnet" | "testnet"; //| "sandbox"- is deprecated ; // default: mainnet
 // type ProtoNet = "v2-mainnet" | "v2-testnet" | "v4-mainnet" | "v4-testnet";
 
-const AXIOS_TIMEOUT = 5000;
+let axios_timeout: string = process.env.AXIOS_TIMEOUT || "5000";
+const AXIOS_TIMEOUT: number = parseInt(axios_timeout)
 
 type ProtoNetHealth = {
     "v2-mainnet": boolean,
     "v2-testnet": boolean,
     "v4-mainnet": boolean,
     "v4-testnet": boolean
+}
+
+function getExternalIp(): Promise<string> {
+    return new Promise((resolve, reject) => {
+        http.get('http://api.ipify.org', (res) => {
+            let data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    resolve(data);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }).on('error', (error) => {
+            reject(error);
+        });
+    });
 }
 
 export class Mngr {
@@ -30,6 +53,7 @@ export class Mngr {
     v1Nodes: any[];
     running: boolean;
     atleastOneHealthy: boolean;
+    hostIp: string | null;
 
     constructor() {
         this.successTS = -1;
@@ -52,6 +76,7 @@ export class Mngr {
             'Accept': 'application/json'
         }
         this.atleastOneHealthy = false;
+        this.hostIp = null;
 
     }
     stopLoop() {
@@ -73,6 +98,13 @@ export class Mngr {
 
     }
     async updateNodeMngr(node: any) {
+        // same node 
+        if (this.hostIp && node.Ip == this.hostIp) {
+            node.Mngr = this.status;
+            console.log(`update self node.mngr=status for IP ${node.Ip}`)
+            return
+        }
+
         try {
             const url = `http://${node.Ip}/mngr/`;
             const res = await axios.get(url, {
@@ -106,17 +138,17 @@ export class Mngr {
 
         // call serial
         for (const node of nodes) {
+            // avoid updating my own node via http call            
             await this.updateNodeMngr(node);
+
         }
         return nodes;
     }
     async monitor() {
-        // each node keeps [nodes] structure with health of all nodes 
-        try {
-            this.nodes = await this.updateNodes();
-        }
-        catch (e) {
-            console.error('failed to update nodes', e);
+        // get local IP
+        if (!this.hostIp) {
+            this.hostIp = await getExternalIp()
+            console.log("HOST_IP: ", this.hostIp)
         }
 
         // reset local test         
@@ -138,6 +170,15 @@ export class Mngr {
 
         this.successTS = Date.now();
         this.updateStatus();
+
+        // update nodes list after local status has been updated
+        // each node keeps [nodes] structure with health of all other nodes 
+        try {
+            this.nodes = await this.updateNodes();
+        }
+        catch (e) {
+            console.error('failed to update nodes', e);
+        }
     }
     //////////////////////////////////////////////////
     async callEdgeApi(method: string) {
@@ -177,7 +218,7 @@ export class Mngr {
                         // get healthcheck obj associated with the backend
                         const hc = await this.callEdgeApi(`version/${version.data.number}/healthcheck/${backend.healthcheck}`);
                         // create healthcheck url
-                        const hcUrl = `http://${backend.ipv4}/${hc.data.path}`;
+                        const hcUrl = `http://${backend.ipv4}${hc.data.path}`;
                         // perform healthcheck
                         const hcRes = await axios.get(hcUrl, {
                             timeout: AXIOS_TIMEOUT
