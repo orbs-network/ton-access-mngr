@@ -211,23 +211,22 @@ export class Mngr {
         for (const backend of backends.data) {
             // ignore backends which are not in beName2Id table
             // as beName2Id-U-Installed Backends, becomes the single source of truth for both v1 and v2 
+            let healthy = "1"; // asume health
+            // avoid check if IP is my own to prevent circular call on nginx
             if (this.beName2Id.hasOwnProperty(backend.name)) {
-                let healthy = "0";
+
                 try {
-                    if (backend.healthcheck) {
+                    if (backend.ipv4 != this.hostIp && backend.healthcheck) {
                         // get healthcheck obj associated with the backend
                         const hc = await this.callEdgeApi(`version/${version.data.number}/healthcheck/${backend.healthcheck}`);
                         // create healthcheck url
                         const hcUrl = `http://${backend.ipv4}${hc.data.path}`;
+                        console.log("helathecheck url", hcUrl);
                         // perform healthcheck
                         const hcRes = await axios.get(hcUrl, {
                             timeout: AXIOS_TIMEOUT
                         });
                         healthy = hcRes.status === hc.data?.expected_response ? "1" : "0";
-                    }
-                    else {
-                        // healthcheck not installed, assumes healthy
-                        healthy = "1";
                     }
                 } catch (e) {
                     console.error("helathecheck error", e);
