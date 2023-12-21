@@ -18,7 +18,7 @@ app.get('/', (_req, _res) => {
 });
 
 app.get('/health', (_req, _res) => {
-    if (mngr.atleastOneHealthy) {
+    if (mngr.status.atleastOneHealthy) {
         _res.status(200).send("OK");
     } else {
         _res.status(500).send("no protonet is healthy in this node");
