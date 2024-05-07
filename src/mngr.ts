@@ -1,5 +1,5 @@
 import { v2Check } from "./v2-ton-client"
-import { v4Check } from "./v4-ton-client"
+import { v4Check, v4CheckSimple } from "./v4-ton-client"
 import { sleep } from './helper';
 import axios from 'axios';
 import * as http from 'http';
@@ -166,7 +166,7 @@ export class Mngr {
         this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://ton-access-dev:10001", v2Check);
         this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://ton-access-dev:10002", v2Check);
         this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://ton-access-dev:20001", v4Check);
-        this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://ton-access-dev:20002", v4Check);
+        this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://ton-access-dev:20002", v4CheckSimple);
 
         this.successTS = Date.now();
         this.updateStatus();
