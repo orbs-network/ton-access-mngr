@@ -83,6 +83,16 @@ export class Mngr {
         this.running = false;
     }
     async runLoop() {
+        console.log('------------------ Mngr start ------------------')
+        console.log('ENV CHECK_TESTNET:\t', process.env.CHECK_TESTNET || "")
+        console.log('ENV FASTLY_SERVICE_ID:\t', process.env.FASTLY_SERVICE_ID || "")
+        console.log('ENV AXIOS_TIMEOUT:\t', process.env.AXIOS_TIMEOUT || "")
+        console.log('ENV V2_MAINNET_ENDPOINT:\t', process.env.V2_MAINNET_ENDPOINT || "")
+        console.log('ENV V2_TESTNET_ENDPOINT:\t', process.env.V2_TESTNET_ENDPOINT || "")
+        console.log('ENV V4_MAINNET_ENDPOINT:\t', process.env.V4_MAINNET_ENDPOINT || "")
+        console.log('ENV V4_TESTNET_ENDPOINT:\t', process.env.V4_TESTNET_ENDPOINT || "")
+
+
         this.running = true;
         console.log('start run loop')
         await this.monitor();
@@ -164,9 +174,16 @@ export class Mngr {
 
         // make serial for caution
         this.health['v2-mainnet'] = await this.runTest(process.env.V2_MAINNET_ENDPOINT || "http://ton-access-dev:10001", v2Check);
-        this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://ton-access-dev:10002", v2Check);
         this.health['v4-mainnet'] = await this.runTest(process.env.V4_MAINNET_ENDPOINT || "http://ton-access-dev:20001", v4Check);
-        this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://ton-access-dev:20002", v4CheckSimple);
+
+        // check testnet only if needed
+        if (process.env.CHECK_TESTNET == "1") {
+            this.health['v2-testnet'] = await this.runTest(process.env.V2_TESTNET_ENDPOINT || "http://ton-access-dev:10002", v2Check);
+            this.health['v4-testnet'] = await this.runTest(process.env.V4_TESTNET_ENDPOINT || "http://ton-access-dev:20002", v4CheckSimple);
+        } else {
+            this.health["v2-testnet"] = true
+            this.health["v4-testnet"] = true
+        }
 
         this.successTS = Date.now();
         this.updateStatus();
